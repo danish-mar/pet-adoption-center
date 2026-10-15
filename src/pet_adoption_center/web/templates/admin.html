@@ -1,0 +1,480 @@
+{% extends "base.html" %}
+
+{% block title %}Shelter Admin Dashboard - PawHaven{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+  <!-- Header Banner -->
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+    <div>
+      <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-extrabold uppercase tracking-wider mb-2">
+        <i class="fa-solid fa-crown text-amber-600"></i> Shelter Director Control Center
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Shelter Administration</h1>
+      <p class="text-sm text-slate-500 mt-1">Manage intake records, review applicant screenings, and supervise adoptions</p>
+    </div>
+
+    <div class="flex space-x-3">
+      <a href="{{ url_for('dbms_suite') }}" class="inline-flex items-center px-4 py-2.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 font-bold text-xs border border-teal-200">
+        <i class="fa-solid fa-database mr-1.5 text-teal-600"></i> Database Suite
+      </a>
+      <a href="#add-pet-card" onclick="openAddPetModal()" class="inline-flex items-center px-5 py-2.5 rounded-xl bg-paw-500 hover:bg-paw-600 text-slate-950 font-extrabold text-xs shadow-md">
+        <i class="fa-solid fa-plus mr-1.5"></i> Add New Pet
+      </a>
+    </div>
+  </div>
+
+  <!-- Key Metrics Row -->
+  <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
+    <div class="bg-white p-5 rounded-3xl border border-slate-200/90 shadow-soft">
+      <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Pets</div>
+      <div class="text-3xl font-extrabold text-slate-900 mt-1">{{ metrics.total_pets }}</div>
+      <div class="text-[11px] text-slate-500 mt-1 flex items-center">
+        <span class="w-1.5 h-1.5 rounded-full bg-slate-400 mr-1.5"></span> In database
+      </div>
+    </div>
+
+    <div class="bg-white p-5 rounded-3xl border border-slate-200/90 shadow-soft">
+      <div class="text-xs font-bold uppercase tracking-wider text-emerald-600">Available</div>
+      <div class="text-3xl font-extrabold text-emerald-700 mt-1">{{ metrics.available_pets }}</div>
+      <div class="text-[11px] text-emerald-600 mt-1 flex items-center">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span> Ready for home
+      </div>
+    </div>
+
+    <div class="bg-white p-5 rounded-3xl border border-slate-200/90 shadow-soft">
+      <div class="text-xs font-bold uppercase tracking-wider text-amber-600">Pending Apps</div>
+      <div class="text-3xl font-extrabold text-amber-600 mt-1">{{ metrics.pending_apps }}</div>
+      <div class="text-[11px] text-amber-600 mt-1 flex items-center">
+        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5 animate-pulse"></span> Needs review
+      </div>
+    </div>
+
+    <div class="bg-white p-5 rounded-3xl border border-slate-200/90 shadow-soft">
+      <div class="text-xs font-bold uppercase tracking-wider text-purple-600">Adopted</div>
+      <div class="text-3xl font-extrabold text-purple-700 mt-1">{{ metrics.adopted_pets }}</div>
+      <div class="text-[11px] text-purple-600 mt-1 flex items-center">
+        <span class="w-1.5 h-1.5 rounded-full bg-purple-500 mr-1.5"></span> Success matches
+      </div>
+    </div>
+
+    <div class="bg-white p-5 rounded-3xl border border-slate-200/90 shadow-soft col-span-2 lg:col-span-1">
+      <div class="text-xs font-bold uppercase tracking-wider text-blue-600">Registered Users</div>
+      <div class="text-3xl font-extrabold text-blue-700 mt-1">{{ metrics.total_users }}</div>
+      <div class="text-[11px] text-blue-600 mt-1 flex items-center">
+        <span class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5"></span> Adopter accounts
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="border-b border-slate-200 mb-8 flex space-x-4">
+    <button id="tabBtn-apps" onclick="switchAdminTab('apps')" class="tab-button border-b-2 border-paw-600 pb-3 text-sm font-extrabold text-slate-900 flex items-center">
+      <i class="fa-solid fa-file-signature mr-2 text-paw-600"></i> Applications Review ({{ applications|length }})
+    </button>
+    <button id="tabBtn-pets" onclick="switchAdminTab('pets')" class="tab-button border-b-2 border-transparent pb-3 text-sm font-semibold text-slate-500 hover:text-slate-800 flex items-center">
+      <i class="fa-solid fa-paw mr-2"></i> Pets Inventory ({{ pets|length }})
+    </button>
+    <button id="tabBtn-users" onclick="switchAdminTab('users')" class="tab-button border-b-2 border-transparent pb-3 text-sm font-semibold text-slate-500 hover:text-slate-800 flex items-center">
+      <i class="fa-solid fa-users mr-2"></i> Users Directory ({{ users|length }})
+    </button>
+  </div>
+
+  <!-- TAB 1: Applications Management -->
+  <div id="tabContent-apps" class="space-y-6">
+    <!-- Filter status sub-buttons -->
+    <div class="flex items-center space-x-2">
+      <a href="{{ url_for('admin_dashboard') }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold {% if current_app_status == 'all' %}bg-slate-900 text-white{% else %}bg-white text-slate-600 border border-slate-200{% endif %}">
+        All
+      </a>
+      <a href="{{ url_for('admin_dashboard', app_status='pending') }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold {% if current_app_status == 'pending' %}bg-amber-500 text-slate-950{% else %}bg-white text-slate-600 border border-slate-200{% endif %}">
+        Pending Only
+      </a>
+      <a href="{{ url_for('admin_dashboard', app_status='approved') }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold {% if current_app_status == 'approved' %}bg-emerald-600 text-white{% else %}bg-white text-slate-600 border border-slate-200{% endif %}">
+        Approved
+      </a>
+      <a href="{{ url_for('admin_dashboard', app_status='rejected') }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold {% if current_app_status == 'rejected' %}bg-rose-600 text-white{% else %}bg-white text-slate-600 border border-slate-200{% endif %}">
+        Rejected
+      </a>
+    </div>
+
+    {% if applications %}
+      <div class="bg-white rounded-3xl border border-slate-200/90 shadow-soft overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-600">
+            <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200">
+              <tr>
+                <th class="px-6 py-4">ID</th>
+                <th class="px-6 py-4">Applicant</th>
+                <th class="px-6 py-4">Pet Interested</th>
+                <th class="px-6 py-4">Living Space</th>
+                <th class="px-6 py-4">Other Pets</th>
+                <th class="px-6 py-4">Status</th>
+                <th class="px-6 py-4 text-right">Review Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              {% for app in applications %}
+                <tr class="hover:bg-slate-50/70 transition-colors">
+                  <td class="px-6 py-4 font-bold text-slate-900">#{{ app.id }}</td>
+                  <td class="px-6 py-4">
+                    <div class="font-bold text-slate-900">{{ app.applicant_name }}</div>
+                    <div class="text-xs text-slate-400">{{ app.applicant_email }} • {{ app.applicant_phone }}</div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="font-bold text-slate-800">{{ app.pet_name }}</div>
+                    <div class="text-xs text-slate-400">{{ app.pet_species }} ({{ app.pet_breed }})</div>
+                  </td>
+                  <td class="px-6 py-4 text-xs font-medium text-slate-700">{{ app.living_space }}</td>
+                  <td class="px-6 py-4 text-xs">
+                    {% if app.has_other_pets %}
+                      <span class="text-teal-700 bg-teal-50 px-2 py-0.5 rounded font-bold">Yes</span>
+                    {% else %}
+                      <span class="text-slate-500 bg-slate-100 px-2 py-0.5 rounded font-medium">None</span>
+                    {% endif %}
+                  </td>
+                  <td class="px-6 py-4">
+                    {% if app.status.lower() == 'pending' %}
+                      <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                        PENDING
+                      </span>
+                    {% elif app.status.lower() == 'approved' %}
+                      <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
+                        APPROVED
+                      </span>
+                    {% elif app.status.lower() == 'rejected' %}
+                      <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-300">
+                        REJECTED
+                      </span>
+                    {% else %}
+                      <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
+                        {{ app.status | upper }}
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td class="px-6 py-4 text-right">
+                    <button type="button" onclick="openReviewModal('{{ app.id }}', '{{ app.applicant_name }}', '{{ app.pet_name }}', '{{ app.experience_notes|replace('\'', '\\\'')|replace('\"', '&quot;') }}', '{{ app.status }}', '{{ app.reviewer_notes|replace('\'', '\\\'')|replace('\"', '&quot;') }}')" class="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-paw-600 text-white font-bold text-xs transition-colors">
+                      Review
+                    </button>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% else %}
+      <div class="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-300">
+        <i class="fa-solid fa-inbox text-4xl text-slate-400 mb-3"></i>
+        <h3 class="text-lg font-bold text-slate-800">No applications in this view</h3>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- TAB 2: Pets Inventory Management -->
+  <div id="tabContent-pets" class="hidden space-y-6">
+    <div class="flex justify-between items-center">
+      <h2 class="text-lg font-extrabold text-slate-900">Shelter Animal Records</h2>
+      <button onclick="openAddPetModal()" class="px-4 py-2 rounded-xl bg-paw-500 hover:bg-paw-600 text-slate-950 font-bold text-xs">
+        <i class="fa-solid fa-plus mr-1"></i> Add Pet Record
+      </button>
+    </div>
+
+    <div class="bg-white rounded-3xl border border-slate-200/90 shadow-soft overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-600">
+          <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200">
+            <tr>
+              <th class="px-6 py-4">ID</th>
+              <th class="px-6 py-4">Animal</th>
+              <th class="px-6 py-4">Species & Breed</th>
+              <th class="px-6 py-4">Age & Gender</th>
+              <th class="px-6 py-4">Fee</th>
+              <th class="px-6 py-4">Current Status</th>
+              <th class="px-6 py-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for pet in pets %}
+              <tr class="hover:bg-slate-50/70 transition-colors">
+                <td class="px-6 py-4 font-bold text-slate-900">#{{ pet.id }}</td>
+                <td class="px-6 py-4">
+                  <div class="flex items-center space-x-3">
+                    <img src="{{ get_pet_image(pet) }}" class="w-10 h-10 rounded-xl object-cover border border-slate-200">
+                    <div>
+                      <div class="font-bold text-slate-900">{{ pet.name }}</div>
+                      <div class="text-xs text-slate-400">{{ pet.size }} Size</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="font-semibold text-slate-800">{{ pet.species }}</div>
+                  <div class="text-xs text-slate-400">{{ pet.breed }}</div>
+                </td>
+                <td class="px-6 py-4 text-xs font-medium text-slate-700">
+                  {{ pet.age_years }} yrs • {{ pet.gender }}
+                </td>
+                <td class="px-6 py-4 font-bold text-slate-900">
+                  ${{ "%.0f"|format(pet.fee) }}
+                </td>
+                <td class="px-6 py-4">
+                  <form method="POST" action="{{ url_for('admin_change_pet_status', pet_id=pet.id) }}" class="inline-block">
+                    <select name="status" onchange="this.form.submit()" class="text-xs font-bold rounded-lg border border-slate-200 px-2 py-1 bg-white cursor-pointer {% if pet.status.lower() == 'available' %}text-emerald-700{% elif pet.status.lower() == 'pending' %}text-amber-700{% else %}text-purple-700{% endif %}">
+                      <option value="available" {% if pet.status.lower() == 'available' %}selected{% endif %}>AVAILABLE</option>
+                      <option value="pending" {% if pet.status.lower() == 'pending' %}selected{% endif %}>PENDING</option>
+                      <option value="adopted" {% if pet.status.lower() == 'adopted' %}selected{% endif %}>ADOPTED</option>
+                    </select>
+                  </form>
+                </td>
+                <td class="px-6 py-4 text-right space-x-2">
+                  <a href="{{ url_for('pet_detail', pet_id=pet.id) }}" class="text-xs font-bold text-slate-600 hover:text-slate-900">
+                    View
+                  </a>
+                  <form method="POST" action="{{ url_for('admin_delete_pet', pet_id=pet.id) }}" onsubmit="return confirm('Permanently remove {{ pet.name }}?');" class="inline-block">
+                    <button type="submit" class="text-xs font-bold text-rose-600 hover:text-rose-800">
+                      Delete
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: Registered Users Directory -->
+  <div id="tabContent-users" class="hidden space-y-6">
+    <div class="bg-white rounded-3xl border border-slate-200/90 shadow-soft overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-600">
+          <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200">
+            <tr>
+              <th class="px-6 py-4">User ID</th>
+              <th class="px-6 py-4">Full Name</th>
+              <th class="px-6 py-4">Username</th>
+              <th class="px-6 py-4">Email</th>
+              <th class="px-6 py-4">Phone</th>
+              <th class="px-6 py-4">Role</th>
+              <th class="px-6 py-4">Member Since</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for u in users %}
+              <tr class="hover:bg-slate-50/70 transition-colors">
+                <td class="px-6 py-4 font-bold text-slate-900">#{{ u.id }}</td>
+                <td class="px-6 py-4 font-bold text-slate-900">{{ u.full_name }}</td>
+                <td class="px-6 py-4 text-xs font-semibold text-slate-600">@{{ u.username }}</td>
+                <td class="px-6 py-4 text-xs">{{ u.email }}</td>
+                <td class="px-6 py-4 text-xs">{{ u.phone or '—' }}</td>
+                <td class="px-6 py-4">
+                  {% if u.is_admin %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                      ADMIN
+                    </span>
+                  {% else %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700">
+                      ADOPTER
+                    </span>
+                  {% endif %}
+                </td>
+                <td class="px-6 py-4 text-xs text-slate-400">
+                  {{ u.created_at.strftime('%Y-%m-%d') if u.created_at else '—' }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal: Application Review Dialog -->
+<div id="reviewModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden transform transition-all">
+    <div class="p-6 bg-slate-900 text-white flex justify-between items-center">
+      <div>
+        <h3 class="text-lg font-bold" id="modalReviewTitle">Review Application</h3>
+        <p class="text-xs text-slate-300" id="modalReviewSubtitle"></p>
+      </div>
+      <button onclick="closeReviewModal()" class="text-slate-400 hover:text-white p-1">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+
+    <form id="reviewForm" method="POST" action="" class="p-6 space-y-4">
+      <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Applicant Notes & Lifestyle</div>
+        <p class="text-xs text-slate-700 leading-relaxed italic" id="modalApplicantNotes"></p>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Decision *</label>
+        <select name="decision" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold bg-white">
+          <option value="approved">Approve Application (Marks Pet Adopted)</option>
+          <option value="rejected">Reject Application</option>
+          <option value="withdrawn">Mark as Withdrawn</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Shelter Staff Feedback Notes</label>
+        <textarea name="reviewer_notes" id="modalReviewerNotes" rows="3" placeholder="Provide context or instructions for meet & greet..." class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm"></textarea>
+      </div>
+
+      <div class="flex justify-end space-x-3 pt-3 border-t border-slate-100">
+        <button type="button" onclick="closeReviewModal()" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100">
+          Cancel
+        </button>
+        <button type="submit" class="px-5 py-2 rounded-xl bg-slate-900 hover:bg-paw-600 text-white text-sm font-bold shadow-sm">
+          Save Decision
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Add New Pet Record -->
+<div id="addPetModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden transform transition-all max-h-[90vh] flex flex-col">
+    <div class="p-6 bg-paw-500 text-slate-950 flex justify-between items-center flex-shrink-0">
+      <div>
+        <h3 class="text-xl font-extrabold">Add New Rescue Pet</h3>
+        <p class="text-xs font-semibold text-slate-900">PostgreSQL Intake Catalog Registration</p>
+      </div>
+      <button onclick="closeAddPetModal()" class="text-slate-800 hover:text-slate-950 p-1">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin_add_pet') }}" class="p-6 space-y-4 overflow-y-auto flex-grow">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Pet Name *</label>
+          <input type="text" name="name" required placeholder="e.g. Copper" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Species *</label>
+          <select name="species" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm bg-white">
+            <option value="Dog">Dog</option>
+            <option value="Cat">Cat</option>
+            <option value="Rabbit">Rabbit</option>
+            <option value="Bird">Bird</option>
+            <option value="Small Animal">Small Animal</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Breed *</label>
+          <input type="text" name="breed" required placeholder="e.g. Beagle / Hound Mix" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Age in Years *</label>
+          <input type="number" step="0.1" min="0" name="age_years" required value="1.0" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Gender *</label>
+          <select name="gender" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm bg-white">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Unknown">Unknown</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Size *</label>
+          <select name="size" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm bg-white">
+            <option value="Small">Small (&lt; 20 lbs)</option>
+            <option value="Medium" selected>Medium (20-50 lbs)</option>
+            <option value="Large">Large (50-80 lbs)</option>
+            <option value="Extra Large">Extra Large (80+ lbs)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Adoption Fee ($) *</label>
+          <input type="number" step="1" min="0" name="fee" required value="95" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Clinical Health Summary</label>
+          <input type="text" name="health_status" value="Healthy & Up to date on shots" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm">
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-6 pt-2">
+        <label class="flex items-center space-x-2 text-xs font-bold text-slate-700 cursor-pointer">
+          <input type="checkbox" name="vaccinated" checked class="text-paw-600 rounded">
+          <span>Fully Vaccinated</span>
+        </label>
+        <label class="flex items-center space-x-2 text-xs font-bold text-slate-700 cursor-pointer">
+          <input type="checkbox" name="spayed_neutered" checked class="text-paw-600 rounded">
+          <span>Spayed / Neutered</span>
+        </label>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Pet Bio / Description *</label>
+        <textarea name="description" rows="3" required placeholder="Describe temperament, favorite activities, home compatibility..." class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm"></textarea>
+      </div>
+
+      <div class="flex justify-end space-x-3 pt-3 border-t border-slate-100 flex-shrink-0">
+        <button type="button" onclick="closeAddPetModal()" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100">
+          Cancel
+        </button>
+        <button type="submit" class="px-5 py-2 rounded-xl bg-slate-900 hover:bg-paw-600 text-white text-sm font-bold shadow-sm">
+          Save New Pet Record
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function switchAdminTab(tab) {
+    ['apps', 'pets', 'users'].forEach(t => {
+      document.getElementById('tabContent-' + t).classList.add('hidden');
+      document.getElementById('tabBtn-' + t).className = 'tab-button border-b-2 border-transparent pb-3 text-sm font-semibold text-slate-500 hover:text-slate-800 flex items-center';
+    });
+    document.getElementById('tabContent-' + tab).classList.remove('hidden');
+    document.getElementById('tabBtn-' + tab).className = 'tab-button border-b-2 border-paw-600 pb-3 text-sm font-extrabold text-slate-900 flex items-center';
+  }
+
+  // Handle URL hash tab switching
+  if (window.location.hash === '#pets-tab') {
+    switchAdminTab('pets');
+  } else if (window.location.hash === '#users-tab') {
+    switchAdminTab('users');
+  }
+
+  function openReviewModal(appId, applicantName, petName, notes, status, reviewerNotes) {
+    document.getElementById('reviewModal').classList.remove('hidden');
+    document.getElementById('modalReviewTitle').textContent = 'Review Application #' + appId;
+    document.getElementById('modalReviewSubtitle').textContent = applicantName + ' for ' + petName;
+    document.getElementById('modalApplicantNotes').textContent = notes || 'No extra notes provided.';
+    document.getElementById('modalReviewerNotes').value = reviewerNotes || '';
+    document.getElementById('reviewForm').action = '/admin/applications/' + appId + '/review';
+  }
+
+  function closeReviewModal() {
+    document.getElementById('reviewModal').classList.add('hidden');
+  }
+
+  function openAddPetModal() {
+    document.getElementById('addPetModal').classList.remove('hidden');
+  }
+
+  function closeAddPetModal() {
+    document.getElementById('addPetModal').classList.add('hidden');
+  }
+</script>
+{% endblock %}

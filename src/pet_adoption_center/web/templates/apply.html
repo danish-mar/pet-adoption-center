@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Apply to Adopt {{ pet.name }} - PawHaven{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+  <!-- Breadcrumbs -->
+  <div class="flex items-center space-x-2 text-xs font-semibold text-slate-400 mb-6">
+    <a href="{{ url_for('index') }}" class="hover:text-slate-700">Home</a>
+    <span>/</span>
+    <a href="{{ url_for('pets_catalog') }}" class="hover:text-slate-700">Pets</a>
+    <span>/</span>
+    <a href="{{ url_for('pet_detail', pet_id=pet.id) }}" class="hover:text-slate-700">{{ pet.name }}</a>
+    <span>/</span>
+    <span class="text-slate-600">Application</span>
+  </div>
+
+  <div class="bg-white rounded-3xl border border-slate-200/90 shadow-card overflow-hidden">
+    
+    <!-- Header Banner -->
+    <div class="bg-gradient-to-r from-amber-500 via-paw-500 to-amber-600 p-8 text-slate-950">
+      <div class="flex flex-col sm:flex-row items-center gap-6">
+        <div class="w-24 h-24 rounded-2xl overflow-hidden border-4 border-white shadow-md flex-shrink-0 bg-white">
+          <img src="{{ get_pet_image(pet) }}" alt="{{ pet.name }}" class="w-full h-full object-cover">
+        </div>
+        <div>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-slate-950 text-white uppercase tracking-wider mb-1.5">
+            Official Adoption Application
+          </span>
+          <h1 class="text-3xl font-extrabold tracking-tight">Adopting {{ pet.name }}</h1>
+          <p class="text-slate-900 font-semibold text-sm mt-0.5">
+            {{ pet.breed }} ({{ pet.species }}) • {{ pet.gender }} • Fee: ${{ "%.0f"|format(pet.fee) }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Application Form -->
+    <form method="POST" action="{{ url_for('apply_adoption', pet_id=pet.id) }}" class="p-8 sm:p-10 space-y-8">
+      
+      <!-- Section 1: Contact Info -->
+      <div>
+        <h2 class="text-base font-extrabold text-slate-900 border-b border-slate-100 pb-3 mb-5 flex items-center">
+          <i class="fa-solid fa-user-check text-paw-600 mr-2.5"></i> 1. Applicant Contact Information
+        </h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div class="sm:col-span-2">
+            <label for="applicant_name" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Full Name *</label>
+            <input type="text" id="applicant_name" name="applicant_name" required value="{{ user.full_name }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-paw-500 focus:border-transparent text-sm font-medium">
+          </div>
+
+          <div>
+            <label for="applicant_email" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Email Address *</label>
+            <input type="email" id="applicant_email" name="applicant_email" required value="{{ user.email }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-paw-500 focus:border-transparent text-sm font-medium">
+          </div>
+
+          <div>
+            <label for="applicant_phone" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Primary Phone *</label>
+            <input type="tel" id="applicant_phone" name="applicant_phone" required value="{{ user.phone }}" placeholder="+1 (555) 000-0000" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-paw-500 focus:border-transparent text-sm font-medium">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Home & Living Environment -->
+      <div>
+        <h2 class="text-base font-extrabold text-slate-900 border-b border-slate-100 pb-3 mb-5 flex items-center">
+          <i class="fa-solid fa-house-chimney text-paw-600 mr-2.5"></i> 2. Home & Living Environment
+        </h2>
+
+        <div class="space-y-5">
+          <div>
+            <label for="living_space" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Type of Residence *</label>
+            <select id="living_space" name="living_space" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-paw-500 text-sm font-medium bg-white">
+              <option value="Single Family Home with Fenced Yard">Single Family Home with Fenced Yard</option>
+              <option value="Single Family Home without Yard">Single Family Home without Yard</option>
+              <option value="Townhouse / Condo">Townhouse / Condo</option>
+              <option value="Apartment">Apartment</option>
+              <option value="Rural / Farm / Acreage">Rural / Farm / Acreage</option>
+            </select>
+          </div>
+
+          <div>
+            <span class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Are there other pets currently living in your home? *</span>
+            <div class="flex items-center space-x-6">
+              <label class="flex items-center space-x-2 text-sm font-semibold text-slate-700 cursor-pointer">
+                <input type="radio" name="has_other_pets" value="yes" class="text-paw-600 focus:ring-paw-500">
+                <span>Yes, I have existing pets</span>
+              </label>
+              <label class="flex items-center space-x-2 text-sm font-semibold text-slate-700 cursor-pointer">
+                <input type="radio" name="has_other_pets" value="no" checked class="text-paw-600 focus:ring-paw-500">
+                <span>No, {{ pet.name }} would be the only pet</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Lifestyle & Experience -->
+      <div>
+        <h2 class="text-base font-extrabold text-slate-900 border-b border-slate-100 pb-3 mb-5 flex items-center">
+          <i class="fa-solid fa-heart-pulse text-paw-600 mr-2.5"></i> 3. Pet Experience & Daily Routine
+        </h2>
+
+        <div>
+          <label for="experience_notes" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Tell us about your pet experience & daily schedule *</label>
+          <textarea id="experience_notes" name="experience_notes" rows="4" required placeholder="Describe your daily routine, who will take care of {{ pet.name }}, where they will sleep, and your experience with similar animals..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-paw-500 text-sm"></textarea>
+          <p class="text-xs text-slate-400 mt-1">This helps our adoption coordinator ensure a wonderful lifelong match.</p>
+        </div>
+      </div>
+
+      <!-- Commitments Checklist -->
+      <div class="p-5 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-3">
+        <label class="flex items-start space-x-3 cursor-pointer">
+          <input type="checkbox" required class="mt-1 text-paw-600 rounded focus:ring-paw-500">
+          <span class="text-xs text-slate-700 font-medium">
+            I certify that all information provided is accurate, that all adults in the household agree to adopting <strong>{{ pet.name }}</strong>, and I am prepared for the financial and emotional commitment of pet guardianship.
+          </span>
+        </label>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+        <a href="{{ url_for('pet_detail', pet_id=pet.id) }}" class="text-sm font-bold text-slate-600 hover:text-slate-900">
+          &larr; Cancel and Return
+        </a>
+        <button type="submit" class="px-8 py-3.5 rounded-2xl bg-slate-900 hover:bg-paw-600 text-white font-extrabold text-sm shadow-md transition-all duration-200">
+          <i class="fa-solid fa-paper-plane mr-2"></i> Submit Application for Review
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+{% endblock %}

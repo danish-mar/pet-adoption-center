@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}My Adoption Applications - PawHaven{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+    <div>
+      <div class="text-xs font-bold text-paw-700 uppercase tracking-widest">Adopter Portal</div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mt-1">My Adoption Applications</h1>
+      <p class="text-sm text-slate-500 mt-1">Track the review status and shelter decisions for your submitted applications</p>
+    </div>
+
+    <a href="{{ url_for('pets_catalog') }}" class="inline-flex items-center px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-sm">
+      <i class="fa-solid fa-magnifying-glass mr-1.5"></i> Find More Pets
+    </a>
+  </div>
+
+  {% if applications %}
+    <div class="space-y-6">
+      {% for app in applications %}
+        <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-soft hover:shadow-card transition-shadow">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            
+            <!-- Pet Details & App Info -->
+            <div class="flex items-start space-x-5">
+              <div class="w-20 h-20 rounded-2xl bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200">
+                <img src="{{ get_pet_image({'name': app.pet_name, 'species': app.pet_species}) }}" alt="{{ app.pet_name }}" class="w-full h-full object-cover">
+              </div>
+
+              <div class="space-y-1">
+                <div class="flex items-center space-x-3">
+                  <h2 class="text-2xl font-extrabold text-slate-900">
+                    <a href="{{ url_for('pet_detail', pet_id=app.pet_id) }}" class="hover:text-paw-600 transition-colors">
+                      {{ app.pet_name }}
+                    </a>
+                  </h2>
+                  <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                    {{ app.pet_species }} • {{ app.pet_breed }}
+                  </span>
+                </div>
+
+                <div class="text-xs text-slate-400 flex items-center space-x-4 pt-0.5">
+                  <span>Application #{{ app.id }}</span>
+                  <span>•</span>
+                  <span>Submitted: {{ app.submitted_at.strftime('%b %d, %Y at %I:%M %p') if app.submitted_at else 'Recently' }}</span>
+                </div>
+
+                <!-- Housing summary -->
+                <div class="text-xs text-slate-600 pt-2 flex flex-wrap gap-2">
+                  <span class="bg-slate-100 px-2.5 py-1 rounded-lg">Home: {{ app.living_space }}</span>
+                  <span class="bg-slate-100 px-2.5 py-1 rounded-lg">Other Pets: {{ 'Yes' if app.has_other_pets else 'None' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Status Pill & Actions -->
+            <div class="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end justify-between gap-4 border-t lg:border-t-0 pt-4 lg:pt-0 border-slate-100">
+              <div>
+                {% if app.status.lower() == 'pending' %}
+                  <span class="inline-flex items-center px-4 py-2 rounded-2xl text-xs font-extrabold bg-amber-50 text-amber-900 border border-amber-300 shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-amber-500 mr-2 animate-ping"></span>
+                    PENDING SHELTER REVIEW
+                  </span>
+                {% elif app.status.lower() == 'approved' %}
+                  <span class="inline-flex items-center px-4 py-2 rounded-2xl text-xs font-extrabold bg-emerald-50 text-emerald-900 border border-emerald-300 shadow-sm">
+                    <i class="fa-solid fa-circle-check text-emerald-600 mr-2 text-sm"></i>
+                    APPROVED FOR ADOPTION! 🎉
+                  </span>
+                {% elif app.status.lower() == 'rejected' %}
+                  <span class="inline-flex items-center px-4 py-2 rounded-2xl text-xs font-extrabold bg-rose-50 text-rose-900 border border-rose-300 shadow-sm">
+                    <i class="fa-solid fa-circle-xmark text-rose-600 mr-2 text-sm"></i>
+                    APPLICATION NOT APPROVED
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center px-4 py-2 rounded-2xl text-xs font-extrabold bg-slate-100 text-slate-700 border border-slate-200">
+                    <i class="fa-solid fa-ban mr-2 text-slate-400"></i>
+                    WITHDRAWN
+                  </span>
+                {% endif %}
+              </div>
+
+              {% if app.status.lower() == 'pending' %}
+                <form method="POST" action="{{ url_for('withdraw_application', app_id=app.id) }}" onsubmit="return confirm('Withdraw this adoption application?');">
+                  <button type="submit" class="text-xs font-bold text-rose-600 hover:text-rose-800 hover:underline">
+                    Withdraw Application
+                  </button>
+                </form>
+              {% endif %}
+            </div>
+
+          </div>
+
+          <!-- Reviewer Staff Feedback / Notes -->
+          {% if app.reviewer_notes %}
+            <div class="mt-6 pt-5 border-t border-slate-100 bg-slate-50/70 -mx-6 sm:-mx-8 -mb-6 sm:-mb-8 p-6 sm:p-8 rounded-b-3xl">
+              <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1 flex items-center">
+                <i class="fa-solid fa-clipboard-check text-paw-600 mr-1.5"></i> Shelter Coordinator Notes
+              </div>
+              <p class="text-sm text-slate-700 italic">"{{ app.reviewer_notes }}"</p>
+              {% if app.updated_at %}
+                <span class="text-[11px] text-slate-400 block mt-1">Updated on {{ app.updated_at.strftime('%b %d, %Y') }}</span>
+              {% endif %}
+            </div>
+          {% endif %}
+
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300 p-8">
+      <div class="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto text-2xl mb-4">
+        <i class="fa-solid fa-file-circle-question"></i>
+      </div>
+      <h3 class="text-xl font-bold text-slate-900">No applications submitted yet</h3>
+      <p class="text-sm text-slate-500 mt-2 max-w-sm mx-auto">
+        When you submit an adoption request for any rescue pet, you can track their status right here.
+      </p>
+      <div class="mt-6">
+        <a href="{{ url_for('pets_catalog') }}" class="inline-flex items-center px-6 py-3 rounded-2xl bg-paw-500 hover:bg-paw-600 text-slate-950 font-bold text-sm shadow-md">
+          Explore Available Pets
+        </a>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

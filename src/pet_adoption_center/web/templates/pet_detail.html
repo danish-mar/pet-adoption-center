@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}{{ pet.name }} ({{ pet.breed }}) - PawHaven Pet Profile{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+  <!-- Breadcrumb -->
+  <div class="flex items-center space-x-2 text-xs font-semibold text-slate-400 mb-6">
+    <a href="{{ url_for('index') }}" class="hover:text-slate-700">Home</a>
+    <span>/</span>
+    <a href="{{ url_for('pets_catalog') }}" class="hover:text-slate-700">Pets</a>
+    <span>/</span>
+    <span class="text-slate-600">{{ pet.name }}</span>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+    
+    <!-- Left Column: Pet Visual & Quick Badges -->
+    <div class="lg:col-span-5 space-y-6">
+      <div class="relative rounded-3xl overflow-hidden bg-slate-100 border border-slate-200 shadow-card">
+        <img src="{{ get_pet_image(pet) }}" alt="{{ pet.name }}" class="w-full h-96 object-cover">
+        
+        <!-- Status Badge -->
+        <div class="absolute top-4 left-4">
+          {% if pet.status.lower() == 'available' %}
+            <span class="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-md">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
+              AVAILABLE FOR ADOPTION
+            </span>
+          {% elif pet.status.lower() == 'pending' %}
+            <span class="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-amber-50 text-amber-800 border border-amber-200 shadow-md">
+              <span class="w-2 h-2 rounded-full bg-amber-500 mr-2"></span>
+              ADOPTION APPLICATION PENDING
+            </span>
+          {% else %}
+            <span class="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-purple-50 text-purple-800 border border-purple-200 shadow-md">
+              <i class="fa-solid fa-heart mr-1.5 text-purple-600"></i>
+              HAPPILY ADOPTED
+            </span>
+          {% endif %}
+        </div>
+
+        <!-- Species Emoji -->
+        <div class="absolute bottom-4 left-4 w-12 h-12 rounded-2xl bg-white/90 backdrop-blur shadow-md flex items-center justify-center text-2xl">
+          {{ pet.species_icon }}
+        </div>
+      </div>
+
+      <!-- Health & Vetting Overview Card -->
+      <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-soft space-y-4">
+        <h2 class="text-base font-bold text-slate-900 flex items-center">
+          <i class="fa-solid fa-notes-medical text-teal-600 mr-2"></i> Veterinary Health Summary
+        </h2>
+        
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100">
+            <div class="text-[11px] font-semibold text-slate-400 uppercase">Vaccinations</div>
+            <div class="font-bold text-slate-800 mt-0.5 flex items-center">
+              {% if pet.vaccinated %}
+                <i class="fa-solid fa-circle-check text-emerald-500 mr-1.5"></i> Up-to-date
+              {% else %}
+                <i class="fa-solid fa-circle-xmark text-rose-500 mr-1.5"></i> Pending shots
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100">
+            <div class="text-[11px] font-semibold text-slate-400 uppercase">Spayed / Neutered</div>
+            <div class="font-bold text-slate-800 mt-0.5 flex items-center">
+              {% if pet.spayed_neutered %}
+                <i class="fa-solid fa-circle-check text-emerald-500 mr-1.5"></i> Yes (Completed)
+              {% else %}
+                <i class="fa-solid fa-circle-info text-amber-500 mr-1.5"></i> Scheduled
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100 col-span-2">
+            <div class="text-[11px] font-semibold text-slate-400 uppercase">Clinical Condition</div>
+            <div class="font-bold text-slate-800 mt-0.5">{{ pet.health_status }}</div>
+          </div>
+        </div>
+
+        {% if pet.intake_date %}
+          <div class="text-xs text-slate-400 pt-2 border-t border-slate-100">
+            Shelter Intake: <span class="font-semibold text-slate-600">{{ pet.intake_date }}</span>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Admin Management Actions (If Logged in as Admin) -->
+      {% if current_user and current_user.is_admin %}
+        <div class="bg-amber-50/60 rounded-3xl p-6 border border-amber-200 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-extrabold text-amber-900 uppercase tracking-wider flex items-center">
+              <i class="fa-solid fa-crown mr-1.5 text-amber-600"></i> Shelter Admin Tools
+            </h2>
+            <span class="text-xs font-bold text-amber-700">ID #{{ pet.id }}</span>
+          </div>
+
+          <form method="POST" action="{{ url_for('admin_change_pet_status', pet_id=pet.id) }}" class="space-y-2">
+            <label class="block text-xs font-semibold text-amber-900">Change Status</label>
+            <div class="flex space-x-2">
+              <select name="status" class="flex-grow px-3 py-2 rounded-xl border border-amber-300 text-xs bg-white">
+                <option value="available" {% if pet.status.lower() == 'available' %}selected{% endif %}>Available</option>
+                <option value="pending" {% if pet.status.lower() == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="adopted" {% if pet.status.lower() == 'adopted' %}selected{% endif %}>Adopted</option>
+              </select>
+              <button type="submit" class="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs">
+                Update
+              </button>
+            </div>
+          </form>
+
+          <form method="POST" action="{{ url_for('admin_delete_pet', pet_id=pet.id) }}" onsubmit="return confirm('Are you sure you want to permanently delete this pet record and its applications?');" class="pt-2 border-t border-amber-200">
+            <button type="submit" class="w-full py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 transition-colors">
+              <i class="fa-solid fa-trash mr-1.5"></i> Delete Pet Record
+            </button>
+          </form>
+        </div>
+      {% endif %}
+
+    </div>
+
+    <!-- Right Column: Pet Bio & Adoption Call to Action -->
+    <div class="lg:col-span-7 space-y-8">
+      
+      <!-- Title & Headline -->
+      <div>
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">{{ pet.name }}</h1>
+            <p class="text-base font-semibold text-paw-700 mt-1 uppercase tracking-wider">
+              {{ pet.breed }} ({{ pet.species }})
+            </p>
+          </div>
+          
+          <div class="text-right">
+            <div class="text-xs font-semibold text-slate-400 uppercase">Adoption Fee</div>
+            <div class="text-3xl font-extrabold text-slate-900">${{ "%.0f"|format(pet.fee) }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft text-center">
+          <div class="text-xs font-semibold text-slate-400 uppercase">Age</div>
+          <div class="text-lg font-extrabold text-slate-800 mt-0.5">
+            {{ pet.age_years }} {{ 'Years' if pet.age_years >= 1 else 'Months' }}
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft text-center">
+          <div class="text-xs font-semibold text-slate-400 uppercase">Gender</div>
+          <div class="text-lg font-extrabold text-slate-800 mt-0.5">
+            {{ pet.gender }}
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft text-center">
+          <div class="text-xs font-semibold text-slate-400 uppercase">Size</div>
+          <div class="text-lg font-extrabold text-slate-800 mt-0.5">
+            {{ pet.size }}
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft text-center">
+          <div class="text-xs font-semibold text-slate-400 uppercase">Shelter ID</div>
+          <div class="text-lg font-extrabold text-slate-800 mt-0.5">
+            #{{ pet.id }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Description / Story -->
+      <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-soft space-y-4">
+        <h2 class="text-xl font-extrabold text-slate-900">About {{ pet.name }}</h2>
+        <div class="prose text-slate-600 leading-relaxed text-base space-y-4">
+          <p>{{ pet.description }}</p>
+          <p class="text-sm text-slate-500 italic bg-amber-50/50 p-4 rounded-2xl border border-amber-100">
+            "Every rescue animal has their own quirks, favorite toys, and moments of joy. Come meet {{ pet.name }} at our adoption center to see if you make the perfect pair!"
+          </p>
+        </div>
+      </div>
+
+      <!-- Adoption Action CTA Box -->
+      <div class="rounded-3xl p-8 bg-gradient-to-tr from-slate-900 to-slate-800 text-white shadow-xl relative overflow-hidden">
+        <div class="relative z-10 space-y-4">
+          <h2 class="text-2xl font-extrabold tracking-tight">Ready to welcome {{ pet.name }} into your life?</h2>
+          <p class="text-slate-300 text-sm leading-relaxed max-w-xl">
+            Adoption fee of ${{ "%.0f"|format(pet.fee) }} includes full vaccinations, microchip registration, spay/neuter surgery, and 30 days of complimentary pet wellness insurance.
+          </p>
+
+          <div class="pt-4 flex flex-wrap gap-4 items-center">
+            {% if pet.status.lower() == 'available' %}
+              {% if has_pending_app %}
+                <div class="inline-flex items-center px-6 py-3.5 rounded-2xl bg-amber-500 text-slate-950 font-extrabold text-sm">
+                  <i class="fa-solid fa-clock mr-2"></i> You have a pending application for {{ pet.name }}
+                </div>
+                <a href="{{ url_for('my_applications') }}" class="text-xs font-bold text-amber-300 hover:text-white underline">
+                  View in My Applications &rarr;
+                </a>
+              {% else %}
+                <a href="{{ url_for('apply_adoption', pet_id=pet.id) }}" class="inline-flex items-center justify-center px-8 py-4 rounded-2xl bg-paw-500 hover:bg-paw-400 text-slate-950 font-extrabold text-base shadow-lg shadow-paw-500/20 transform hover:-translate-y-0.5 transition-all">
+                  <i class="fa-solid fa-heart mr-2 text-rose-700"></i> Submit Adoption Application
+                </a>
+              {% endif %}
+            {% elif pet.status.lower() == 'pending' %}
+              <div class="inline-flex items-center px-6 py-3.5 rounded-2xl bg-amber-500/20 border border-amber-400 text-amber-300 font-extrabold text-sm">
+                <i class="fa-solid fa-hourglass-half mr-2"></i> Application Currently Under Review
+              </div>
+              <p class="text-xs text-slate-400 w-full">You may still submit backup applications by contacting the shelter.</p>
+            {% else %}
+              <div class="inline-flex items-center px-6 py-3.5 rounded-2xl bg-purple-900/60 border border-purple-500 text-purple-200 font-extrabold text-sm">
+                <i class="fa-solid fa-shield-cat mr-2"></i> This pet has found their forever family!
+              </div>
+              <a href="{{ url_for('pets_catalog') }}" class="px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs">
+                Browse Other Available Pets
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Pet Catalog - PawHaven{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  
+  <!-- Catalog Header & Breadcrumb -->
+  <div class="mb-8">
+    <div class="flex items-center space-x-2 text-xs font-semibold text-slate-400 mb-2">
+      <a href="{{ url_for('index') }}" class="hover:text-slate-700">Home</a>
+      <span>/</span>
+      <span class="text-slate-600">Adoptable Pets</span>
+    </div>
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Adoptable Pets Catalog</h1>
+        <p class="text-sm text-slate-500 mt-1">Browse {{ pets|length }} rescue animal{{ 's' if pets|length != 1 else '' }} waiting for loving forever homes</p>
+      </div>
+      
+      {% if current_user and current_user.is_admin %}
+        <a href="{{ url_for('admin_dashboard') }}#add-pet-card" class="inline-flex items-center px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-sm">
+          <i class="fa-solid fa-plus mr-1.5"></i> Add New Pet Record
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Filter & Search Toolbar -->
+  <div class="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-soft mb-10">
+    <form method="GET" action="{{ url_for('pets_catalog') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
+      
+      <!-- Keyword Search -->
+      <div class="lg:col-span-4">
+        <label for="search" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Search Name / Breed</label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+            <i class="fa-solid fa-magnifying-glass text-sm"></i>
+          </div>
+          <input type="text" name="search" id="search" value="{{ search_query }}" placeholder="Search by name, breed, keywords..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-paw-500 focus:border-transparent text-sm">
+        </div>
+      </div>
+
+      <!-- Species Dropdown -->
+      <div class="lg:col-span-3">
+        <label for="species" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Species</label>
+        <select name="species" id="species" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-paw-500 focus:border-transparent text-sm bg-white">
+          <option value="">All Species</option>
+          {% for sp in species_list %}
+            <option value="{{ sp }}" {% if selected_species.lower() == sp.lower() %}selected{% endif %}>{{ sp }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Status Dropdown -->
+      <div class="lg:col-span-2">
+        <label for="status" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Status</label>
+        <select name="status" id="status" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-paw-500 focus:border-transparent text-sm bg-white">
+          <option value="">All Statuses</option>
+          <option value="available" {% if selected_status.lower() == 'available' %}selected{% endif %}>Available</option>
+          <option value="pending" {% if selected_status.lower() == 'pending' %}selected{% endif %}>Pending</option>
+          <option value="adopted" {% if selected_status.lower() == 'adopted' %}selected{% endif %}>Adopted</option>
+        </select>
+      </div>
+
+      <!-- Order / Sorting -->
+      <div class="lg:col-span-2">
+        <label for="order_by" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Sort Order</label>
+        <select name="order_by" id="order_by" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-paw-500 focus:border-transparent text-sm bg-white">
+          <option value="id ASC" {% if selected_order == 'id ASC' %}selected{% endif %}>Oldest First</option>
+          <option value="id DESC" {% if selected_order == 'id DESC' %}selected{% endif %}>Newest Additions</option>
+          <option value="fee ASC" {% if selected_order == 'fee ASC' %}selected{% endif %}>Lowest Fee</option>
+          <option value="fee DESC" {% if selected_order == 'fee DESC' %}selected{% endif %}>Highest Fee</option>
+          <option value="age ASC" {% if selected_order == 'age ASC' %}selected{% endif %}>Youngest First</option>
+          <option value="name ASC" {% if selected_order == 'name ASC' %}selected{% endif %}>Name (A-Z)</option>
+        </select>
+      </div>
+
+      <!-- Submit & Reset Buttons -->
+      <div class="lg:col-span-1 flex space-x-2">
+        <button type="submit" class="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition-colors flex items-center justify-center" title="Apply Filters">
+          <i class="fa-solid fa-filter"></i>
+        </button>
+        {% if search_query or selected_species or selected_status or selected_order != 'id ASC' %}
+          <a href="{{ url_for('pets_catalog') }}" class="py-2.5 px-3 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 text-sm flex items-center justify-center" title="Reset Filters">
+            <i class="fa-solid fa-rotate-left"></i>
+          </a>
+        {% endif %}
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Pet Grid -->
+  {% if pets %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      {% for pet in pets %}
+        <div class="group bg-white rounded-3xl border border-slate-200/90 shadow-soft hover:shadow-card hover:border-paw-300 transition-all duration-300 flex flex-col overflow-hidden">
+          
+          <!-- Pet Image & Badges -->
+          <div class="relative h-64 overflow-hidden bg-slate-100">
+            <img src="{{ get_pet_image(pet) }}" alt="{{ pet.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+            
+            <!-- Status Badge -->
+            <div class="absolute top-4 left-4">
+              {% if pet.status.lower() == 'available' %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-sm backdrop-blur">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
+                  AVAILABLE
+                </span>
+              {% elif pet.status.lower() == 'pending' %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 shadow-sm backdrop-blur">
+                  <span class="w-2 h-2 rounded-full bg-amber-500 mr-2"></span>
+                  PENDING REVIEW
+                </span>
+              {% else %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-purple-50 text-purple-800 border border-purple-200 shadow-sm backdrop-blur">
+                  <i class="fa-solid fa-heart mr-1.5 text-purple-600"></i>
+                  ADOPTED
+                </span>
+              {% endif %}
+            </div>
+
+            <!-- Species Icon -->
+            <div class="absolute top-4 right-4">
+              <span class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/95 text-lg shadow-sm">
+                {{ pet.species_icon }}
+              </span>
+            </div>
+
+            <!-- Adoption Fee Badge -->
+            <div class="absolute bottom-3 right-3 bg-slate-900/85 text-white text-xs font-bold px-3 py-1 rounded-xl backdrop-blur">
+              ${{ "%.0f"|format(pet.fee) }} Fee
+            </div>
+          </div>
+
+          <!-- Pet Information -->
+          <div class="p-6 flex-grow flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-extrabold text-slate-900 group-hover:text-paw-600 transition-colors">
+                  <a href="{{ url_for('pet_detail', pet_id=pet.id) }}">{{ pet.name }}</a>
+                </h2>
+                <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600">{{ pet.size }}</span>
+              </div>
+              
+              <div class="text-xs font-semibold text-paw-700 mt-1 uppercase tracking-wider">
+                {{ pet.species }} • {{ pet.breed }}
+              </div>
+
+              <div class="text-xs text-slate-400 mt-1 flex items-center space-x-3">
+                <span><i class="fa-regular fa-clock mr-1"></i> {{ pet.age_years }} {{ 'yrs old' if pet.age_years >= 1 else 'months' }}</span>
+                <span>•</span>
+                <span><i class="fa-solid fa-venus-mars mr-1"></i> {{ pet.gender }}</span>
+              </div>
+
+              <p class="text-sm text-slate-600 line-clamp-2 mt-3 leading-relaxed">
+                {{ pet.description }}
+              </p>
+
+              <!-- Attributes -->
+              <div class="flex flex-wrap gap-1.5 mt-4">
+                {% if pet.vaccinated %}
+                  <span class="inline-flex items-center text-[11px] font-semibold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md">
+                    <i class="fa-solid fa-syringe mr-1 text-[10px]"></i> Vaccinated
+                  </span>
+                {% endif %}
+                {% if pet.spayed_neutered %}
+                  <span class="inline-flex items-center text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md">
+                    <i class="fa-solid fa-check mr-1 text-[10px]"></i> Spayed/Neutered
+                  </span>
+                {% endif %}
+                <span class="inline-flex items-center text-[11px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
+                  {{ pet.health_status }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+              <a href="{{ url_for('pet_detail', pet_id=pet.id) }}" class="text-sm font-bold text-slate-700 hover:text-slate-900">
+                View Full Profile
+              </a>
+              
+              {% if pet.status.lower() == 'available' %}
+                <a href="{{ url_for('apply_adoption', pet_id=pet.id) }}" class="inline-flex items-center px-4 py-2 rounded-xl bg-slate-900 hover:bg-paw-600 text-white text-xs font-bold transition-colors">
+                  Apply to Adopt <i class="fa-solid fa-arrow-right ml-1.5 text-[10px]"></i>
+                </a>
+              {% elif pet.status.lower() == 'pending' %}
+                <a href="{{ url_for('pet_detail', pet_id=pet.id) }}" class="inline-flex items-center px-3.5 py-2 rounded-xl bg-amber-100 text-amber-900 text-xs font-bold">
+                  Under Review
+                </a>
+              {% else %}
+                <span class="inline-flex items-center px-3.5 py-2 rounded-xl bg-purple-100 text-purple-900 text-xs font-bold">
+                  Adopted ❤️
+                </span>
+              {% endif %}
+            </div>
+
+          </div>
+
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300">
+      <div class="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto text-2xl mb-4">
+        <i class="fa-solid fa-paw"></i>
+      </div>
+      <h3 class="text-xl font-bold text-slate-800">No animals match your search filters</h3>
+      <p class="text-sm text-slate-500 mt-2 max-w-sm mx-auto">
+        Try broadening your filters, choosing a different species, or clearing the search query.
+      </p>
+      <div class="mt-6">
+        <a href="{{ url_for('pets_catalog') }}" class="inline-flex items-center px-5 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-sm">
+          Clear All Filters
+        </a>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In - PawHaven{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto px-4 py-16">
+  
+  <div class="bg-white rounded-3xl p-8 sm:p-10 border border-slate-200/90 shadow-card">
+    
+    <div class="text-center mb-8">
+      <div class="w-14 h-14 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto text-2xl mb-3">
+        <i class="fa-solid fa-paw"></i>
+      </div>
+      <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Welcome to PawHaven</h1>
+      <p class="text-xs text-slate-500 mt-1">Sign in to submit applications or access shelter control</p>
+    </div>
+
+    <!-- Login Form -->
+    <form method="POST" action="{{ url_for('login', next=request.args.get('next')) }}" class="space-y-4">
+      <div>
+        <label for="username" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Username</label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+            <i class="fa-solid fa-user text-xs"></i>
+          </div>
+          <input type="text" id="username" name="username" required placeholder="admin or adopter" class="w-full pl-9 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-paw-500 text-sm">
+        </div>
+      </div>
+
+      <div>
+        <label for="password" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Password</label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+            <i class="fa-solid fa-lock text-xs"></i>
+          </div>
+          <input type="password" id="password" name="password" required placeholder="••••••••" class="w-full pl-9 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-paw-500 text-sm">
+        </div>
+      </div>
+
+      <button type="submit" class="w-full py-3.5 rounded-2xl bg-slate-900 hover:bg-paw-600 text-white font-extrabold text-sm shadow-md transition-colors mt-2">
+        Sign In
+      </button>
+    </form>
+
+    <!-- 1-Click Demo Accounts -->
+    <div class="mt-8 pt-6 border-t border-slate-100">
+      <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center mb-3">
+        Quick Demo Sign-In
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <button type="button" onclick="autofill('admin', 'admin123')" class="p-3 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-left transition-colors">
+          <div class="text-xs font-extrabold flex items-center">
+            <i class="fa-solid fa-crown text-[10px] mr-1 text-amber-600"></i> Director
+          </div>
+          <div class="text-[10px] text-amber-700 font-mono mt-0.5">admin / admin123</div>
+        </button>
+
+        <button type="button" onclick="autofill('adopter', 'user123')" class="p-3 rounded-xl bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-900 text-left transition-colors">
+          <div class="text-xs font-extrabold flex items-center">
+            <i class="fa-solid fa-user text-[10px] mr-1 text-teal-600"></i> Adopter
+          </div>
+          <div class="text-[10px] text-teal-700 font-mono mt-0.5">adopter / user123</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Register Link -->
+    <div class="text-center mt-6 text-xs text-slate-500">
+      Don't have an account yet? 
+      <a href="{{ url_for('register') }}" class="font-bold text-paw-700 hover:text-paw-800">Create one now &rarr;</a>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  function autofill(u, p) {
+    document.getElementById('username').value = u;
+    document.getElementById('password').value = p;
+  }
+</script>
+{% endblock %}

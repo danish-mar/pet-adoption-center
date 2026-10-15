@@ -1,0 +1,430 @@
+{% extends "base.html" %}
+
+{% block title %}DBMS Academic Suite - PawHaven Relational Architecture{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+    <div>
+      <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-teal-100 text-teal-900 text-xs font-extrabold uppercase tracking-wider mb-2">
+        <i class="fa-solid fa-graduation-cap text-teal-600"></i> Relational Database Engineering
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">PostgreSQL DBMS Suite</h1>
+      <p class="text-sm text-slate-500 mt-1">
+        3NF Schema decomposition, live execution plans, ACID transactions, and catalog metrics
+      </p>
+    </div>
+
+    <div class="flex items-center space-x-3">
+      <span class="inline-flex items-center px-3 py-1.5 rounded-xl bg-slate-900 text-teal-400 font-mono text-xs font-bold border border-slate-800">
+        <span class="w-2 h-2 rounded-full bg-teal-400 mr-2 animate-pulse"></span>
+        PostgreSQL 18.6
+      </span>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="border-b border-slate-200 mb-8 flex flex-wrap gap-2 sm:gap-6">
+    <button id="dbmsTabBtn-queries" onclick="switchDbmsTab('queries')" class="dbms-tab-btn border-b-2 border-teal-600 pb-3 text-sm font-extrabold text-slate-900 flex items-center">
+      <i class="fa-solid fa-terminal mr-2 text-teal-600"></i> SQL Query Lab & EXPLAIN
+    </button>
+    <button id="dbmsTabBtn-schema" onclick="switchDbmsTab('schema')" class="dbms-tab-btn border-b-2 border-transparent pb-3 text-sm font-semibold text-slate-500 hover:text-slate-800 flex items-center">
+      <i class="fa-solid fa-sitemap mr-2"></i> 3NF Relational Schema
+    </button>
+    <button id="dbmsTabBtn-acid" onclick="switchDbmsTab('acid')" class="dbms-tab-btn border-b-2 border-transparent pb-3 text-sm font-semibold text-slate-500 hover:text-slate-800 flex items-center">
+      <i class="fa-solid fa-shield-halved mr-2"></i> ACID Transaction Demo
+    </button>
+    <button id="dbmsTabBtn-catalog" onclick="switchDbmsTab('catalog')" class="dbms-tab-btn border-b-2 border-transparent pb-3 text-sm font-semibold text-slate-500 hover:text-slate-800 flex items-center">
+      <i class="fa-solid fa-table-list mr-2"></i> Catalog Statistics
+    </button>
+    <button id="dbmsTabBtn-audit" onclick="switchDbmsTab('audit')" class="dbms-tab-btn border-b-2 border-transparent pb-3 text-sm font-semibold text-slate-500 hover:text-slate-800 flex items-center">
+      <i class="fa-solid fa-clock-rotate-left mr-2"></i> Audit Trail
+    </button>
+  </div>
+
+  <!-- TAB 1: SQL Query Laboratory -->
+  <div id="dbmsTabContent-queries" class="space-y-6">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-soft">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+        <div>
+          <h2 class="text-lg font-extrabold text-slate-900">Interactive PostgreSQL Query Console</h2>
+          <p class="text-xs text-slate-500">Run queries directly against live tables or analyze query planner cost trees</p>
+        </div>
+
+        <!-- Prebuilt Queries Quick Selector -->
+        <div class="flex items-center space-x-2">
+          <label class="text-xs font-bold text-slate-500 whitespace-nowrap">Load Preset:</label>
+          <select id="presetSelect" onchange="loadPresetQuery()" class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium bg-slate-50 text-slate-700">
+            <option value="">-- Choose Prebuilt Query --</option>
+            {% for q in prebuilt_queries %}
+              <option value="{{ loop.index0 }}">{{ q.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- SQL Input -->
+      <div class="relative">
+        <textarea id="sqlInput" rows="5" class="w-full font-mono text-xs sm:text-sm p-4 rounded-2xl bg-slate-900 text-emerald-400 border border-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="SELECT p.name, p.species, p.fee, COUNT(a.id) as applications FROM pets p LEFT JOIN adoption_applications a ON p.id = a.pet_id GROUP BY p.id;"></textarea>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center justify-between gap-4 mt-4">
+        <div class="text-xs text-slate-400" id="queryMetaText">
+          Ready to execute query.
+        </div>
+        <div class="flex space-x-3">
+          <button type="button" onclick="executeQuery(true)" class="px-4 py-2.5 rounded-xl border border-teal-600 hover:bg-teal-50 text-teal-800 font-bold text-xs transition-colors">
+            <i class="fa-solid fa-tree mr-1.5"></i> EXPLAIN ANALYZE
+          </button>
+          <button type="button" onclick="executeQuery(false)" class="px-6 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-extrabold text-xs shadow-md shadow-teal-600/20 transition-all">
+            <i class="fa-solid fa-play mr-1.5"></i> Execute SQL
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Query Result Container -->
+      <div id="queryResultArea" class="mt-8 hidden">
+        <div class="border-t border-slate-100 pt-6">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-extrabold text-slate-900" id="resultTitle">Query Results</h3>
+            <span class="text-xs font-mono text-teal-700 bg-teal-50 px-2.5 py-1 rounded-lg" id="resultMetrics"></span>
+          </div>
+          
+          <div id="resultContent" class="overflow-x-auto max-h-96 rounded-2xl border border-slate-200">
+            <!-- Table dynamically injected here -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TAB 2: 3NF Relational Schema Overview -->
+  <div id="dbmsTabContent-schema" class="hidden space-y-6">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-soft">
+      <h2 class="text-xl font-extrabold text-slate-900 mb-2">Relational Schema & 3NF Normalization Analysis</h2>
+      <p class="text-sm text-slate-600 leading-relaxed mb-6">
+        The database adheres to Third Normal Form (3NF) and Boyce-Codd Normal Form (BCNF): every non-prime attribute is fully functionally dependent on candidate keys with no transitive dependencies.
+      </p>
+
+      <!-- Tables Decomposition Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Table: Shelters -->
+        <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-900 text-base font-mono">1. shelters</span>
+            <span class="text-[11px] font-bold bg-teal-100 text-teal-800 px-2 py-0.5 rounded">3NF OK</span>
+          </div>
+          <div class="text-xs text-slate-600 font-mono">
+            <strong>PK:</strong> (id) &bull; <strong>Candidate Keys:</strong> {name}
+          </div>
+          <p class="text-xs text-slate-500 font-mono bg-white p-3 rounded-xl border border-slate-100">
+            FD: {id} &rarr; {name, address, city, state, capacity, phone, created_at}
+          </p>
+        </div>
+
+        <!-- Table: Users -->
+        <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-900 text-base font-mono">2. users</span>
+            <span class="text-[11px] font-bold bg-teal-100 text-teal-800 px-2 py-0.5 rounded">3NF OK</span>
+          </div>
+          <div class="text-xs text-slate-600 font-mono">
+            <strong>PK:</strong> (id) &bull; <strong>Candidate Keys:</strong> {username}, {email}
+          </div>
+          <p class="text-xs text-slate-500 font-mono bg-white p-3 rounded-xl border border-slate-100">
+            FD: {id} &rarr; {username, password_hash, salt, role, full_name, email, phone}<br>
+            FD: {username} &rarr; {id, ...} | {email} &rarr; {id, ...}
+          </p>
+        </div>
+
+        <!-- Table: Pets -->
+        <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-900 text-base font-mono">3. pets</span>
+            <span class="text-[11px] font-bold bg-teal-100 text-teal-800 px-2 py-0.5 rounded">3NF OK</span>
+          </div>
+          <div class="text-xs text-slate-600 font-mono">
+            <strong>PK:</strong> (id) &bull; <strong>FK:</strong> shelter_id &rarr; shelters(id)
+          </div>
+          <p class="text-xs text-slate-500 font-mono bg-white p-3 rounded-xl border border-slate-100">
+            FD: {id} &rarr; {shelter_id, name, species, breed, age_years, gender, size, status, fee, ...}
+          </p>
+        </div>
+
+        <!-- Table: Adoption Applications -->
+        <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-900 text-base font-mono">4. adoption_applications</span>
+            <span class="text-[11px] font-bold bg-teal-100 text-teal-800 px-2 py-0.5 rounded">3NF OK</span>
+          </div>
+          <div class="text-xs text-slate-600 font-mono">
+            <strong>PK:</strong> (id) &bull; <strong>FKs:</strong> pet_id &rarr; pets(id), user_id &rarr; users(id)
+          </div>
+          <p class="text-xs text-slate-500 font-mono bg-white p-3 rounded-xl border border-slate-100">
+            FD: {id} &rarr; {pet_id, user_id, applicant_name, living_space, status, reviewer_notes}
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Raw 3NF Documentation View -->
+      <div class="mt-8">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Relational Formulation Specification</h3>
+        <pre class="bg-slate-900 text-slate-200 p-6 rounded-2xl text-xs font-mono overflow-x-auto whitespace-pre leading-relaxed border border-slate-800">{{ schema_text }}</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: ACID Transaction Simulation -->
+  <div id="dbmsTabContent-acid" class="hidden space-y-6">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-soft">
+      <div class="max-w-2xl mb-6">
+        <h2 class="text-xl font-extrabold text-slate-900">ACID Transaction Test & Rollback Demonstrator</h2>
+        <p class="text-sm text-slate-600 mt-1 leading-relaxed">
+          PostgreSQL guarantees Atomicity, Consistency, Isolation, and Durability. Simulate an adoption transaction with real database locks and observer ROLLBACK mechanics when constraints are violated.
+        </p>
+      </div>
+
+      <!-- Action Triggers -->
+      <div class="flex flex-wrap gap-4 mb-8">
+        <button type="button" onclick="runAcidTest(false)" class="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm flex items-center">
+          <i class="fa-solid fa-check-double mr-2"></i> Simulate Successful Transaction (COMMIT)
+        </button>
+
+        <button type="button" onclick="runAcidTest(true)" class="px-5 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-sm flex items-center">
+          <i class="fa-solid fa-triangle-exclamation mr-2"></i> Simulate Failure & ROLLBACK
+        </button>
+      </div>
+
+      <!-- ACID Logs Box -->
+      <div id="acidResultBox" class="hidden space-y-4">
+        <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 text-slate-200 font-mono text-xs space-y-2" id="acidLogSteps">
+          <!-- Live steps injected here -->
+        </div>
+
+        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-700" id="acidSummaryBox">
+          <!-- Summary explanation injected here -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TAB 4: Database Catalog Statistics -->
+  <div id="dbmsTabContent-catalog" class="hidden space-y-6">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-soft">
+      <h2 class="text-xl font-extrabold text-slate-900 mb-2">PostgreSQL System Catalog Telemetry</h2>
+      <p class="text-sm text-slate-500 mb-6">Live table sizes, live and dead tuple metrics queried from <code class="text-teal-600 bg-teal-50 px-1 py-0.5 rounded font-mono">pg_stat_user_tables</code></p>
+
+      <div class="overflow-x-auto rounded-2xl border border-slate-200">
+        <table class="w-full text-left text-sm text-slate-600">
+          <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200">
+            <tr>
+              <th class="px-6 py-4">Table Name</th>
+              <th class="px-6 py-4">Live Tuples</th>
+              <th class="px-6 py-4">Dead Tuples</th>
+              <th class="px-6 py-4">Total Disk Size</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 font-mono text-xs">
+            {% for s in catalog_stats %}
+              <tr class="hover:bg-slate-50">
+                <td class="px-6 py-3.5 font-bold text-slate-900">{{ s.table_name }}</td>
+                <td class="px-6 py-3.5 text-emerald-600">{{ s.live_tuples }}</td>
+                <td class="px-6 py-3.5 text-slate-400">{{ s.dead_tuples }}</td>
+                <td class="px-6 py-3.5 text-slate-700">{{ s.total_size }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5: Audit Trail -->
+  <div id="dbmsTabContent-audit" class="hidden space-y-6">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-soft">
+      <h2 class="text-xl font-extrabold text-slate-900 mb-2">System Mutation Audit Trail</h2>
+      <p class="text-sm text-slate-500 mb-6">Append-only audit logs recorded from transactional actions</p>
+
+      {% if audit_logs %}
+        <div class="overflow-x-auto rounded-2xl border border-slate-200">
+          <table class="w-full text-left text-sm text-slate-600 font-mono text-xs">
+            <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200 font-sans">
+              <tr>
+                <th class="px-6 py-4">Log ID</th>
+                <th class="px-6 py-4">Action</th>
+                <th class="px-6 py-4">Entity</th>
+                <th class="px-6 py-4">Details</th>
+                <th class="px-6 py-4">Timestamp</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              {% for log in audit_logs %}
+                <tr class="hover:bg-slate-50">
+                  <td class="px-6 py-3.5 font-bold text-slate-900">#{{ log.id }}</td>
+                  <td class="px-6 py-3.5 text-teal-700 font-bold">{{ log.action }}</td>
+                  <td class="px-6 py-3.5 text-slate-700">{{ log.entity_type }} ({{ log.entity_id }})</td>
+                  <td class="px-6 py-3.5 text-slate-500 font-sans">{{ log.details }}</td>
+                  <td class="px-6 py-3.5 text-slate-400">{{ log.created_at }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+          <p class="text-xs text-slate-400 font-mono">No audit trail entries recorded yet.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const prebuiltQueries = {{ prebuilt_queries | tojson | safe }};
+
+  function switchDbmsTab(tab) {
+    ['queries', 'schema', 'acid', 'catalog', 'audit'].forEach(t => {
+      document.getElementById('dbmsTabContent-' + t).classList.add('hidden');
+      document.getElementById('dbmsTabBtn-' + t).className = 'dbms-tab-btn border-b-2 border-transparent pb-3 text-sm font-semibold text-slate-500 hover:text-slate-800 flex items-center';
+    });
+    document.getElementById('dbmsTabContent-' + tab).classList.remove('hidden');
+    document.getElementById('dbmsTabBtn-' + tab).className = 'dbms-tab-btn border-b-2 border-teal-600 pb-3 text-sm font-extrabold text-slate-900 flex items-center';
+  }
+
+  function loadPresetQuery() {
+    const idx = document.getElementById('presetSelect').value;
+    if (idx !== '') {
+      document.getElementById('sqlInput').value = prebuiltQueries[idx].sql;
+      document.getElementById('queryMetaText').textContent = prebuiltQueries[idx].description;
+    }
+  }
+
+  async function executeQuery(explain = false) {
+    const sql = document.getElementById('sqlInput').value.trim();
+    if (!sql) {
+      alert('Please enter or select an SQL statement.');
+      return;
+    }
+
+    const resultArea = document.getElementById('queryResultArea');
+    const resultContent = document.getElementById('resultContent');
+    const resultTitle = document.getElementById('resultTitle');
+    const resultMetrics = document.getElementById('resultMetrics');
+
+    resultArea.classList.remove('hidden');
+    resultContent.innerHTML = '<div class="p-8 text-center text-xs text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Querying PostgreSQL database...</div>';
+
+    try {
+      const response = await fetch('/api/dbms/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sql, explain })
+      });
+      const data = await response.json();
+
+      if (!data.success) {
+        resultTitle.textContent = 'Query Execution Failed';
+        resultMetrics.textContent = 'ERROR';
+        resultContent.innerHTML = `
+          <div class="p-4 bg-rose-50 border border-rose-200 text-rose-800 font-mono text-xs rounded-xl">
+            <strong class="block mb-1">PostgreSQL Error:</strong>
+            ${data.error}
+          </div>
+        `;
+        return;
+      }
+
+      if (explain) {
+        resultTitle.textContent = 'EXPLAIN ANALYZE Execution Plan';
+        resultMetrics.textContent = `${data.plan.length} plan nodes`;
+        resultContent.innerHTML = `
+          <div class="p-4 bg-slate-900 text-emerald-400 font-mono text-xs rounded-xl overflow-x-auto whitespace-pre leading-relaxed">
+${data.plan.join('\n')}
+          </div>
+        `;
+        return;
+      }
+
+      resultTitle.textContent = `Query Results (${data.row_count} rows)`;
+      resultMetrics.textContent = `${data.execution_ms.toFixed(2)} ms`;
+
+      if (data.columns.length === 0) {
+        resultContent.innerHTML = '<div class="p-6 text-center text-xs text-slate-500">Query executed successfully. (No returned columns)</div>';
+        return;
+      }
+
+      let tableHtml = `
+        <table class="w-full text-left text-xs font-mono">
+          <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+            <tr>
+              ${data.columns.map(c => `<th class="px-4 py-3">${c}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            ${data.rows.map(r => `
+              <tr class="hover:bg-slate-50">
+                ${r.map(cell => `<td class="px-4 py-2.5 text-slate-800">${cell}</td>`).join('')}
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+      resultContent.innerHTML = tableHtml;
+
+    } catch (err) {
+      resultContent.innerHTML = `<div class="p-4 text-xs text-rose-600">Network / server error: ${err.message}</div>`;
+    }
+  }
+
+  async function runAcidTest(simulateFailure) {
+    const box = document.getElementById('acidResultBox');
+    const logs = document.getElementById('acidLogSteps');
+    const summary = document.getElementById('acidSummaryBox');
+
+    box.classList.remove('hidden');
+    logs.innerHTML = '<div class="text-teal-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Initializing isolated PostgreSQL transaction...</div>';
+
+    try {
+      const resp = await fetch('/api/dbms/acid-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ simulate_failure: simulateFailure })
+      });
+      const data = await resp.json();
+
+      let logHtml = `<div class="font-bold text-white mb-2">--- TRANSACTION TIMELINE (${data.status}) ---</div>`;
+      (data.timeline || []).forEach(step => {
+        let color = step.includes('FAIL') || step.includes('ROLLBACK') ? 'text-rose-400' : 'text-emerald-400';
+        logHtml += `<div class="${color}">${step}</div>`;
+      });
+      logs.innerHTML = logHtml;
+
+      summary.innerHTML = `
+        <div class="font-bold text-slate-900 mb-1">Theoretical Takeaway:</div>
+        <p>${data.explanation || 'Transaction completed.'}</p>
+      `;
+    } catch (err) {
+      logs.innerHTML = `<div class="text-rose-400">Failed to run ACID test: ${err.message}</div>`;
+    }
+  }
+
+  // Pre-load default query
+  window.addEventListener('DOMContentLoaded', () => {
+    if (prebuiltQueries.length > 0) {
+      document.getElementById('sqlInput').value = prebuiltQueries[0].sql;
+      document.getElementById('presetSelect').value = '0';
+      document.getElementById('queryMetaText').textContent = prebuiltQueries[0].description;
+    }
+  });
+</script>
+{% endblock %}

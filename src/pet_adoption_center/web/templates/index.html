@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+
+{% block title %}PawHaven - Find Your Forever Companion{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="relative overflow-hidden bg-white border-b border-slate-200/70 pt-8 pb-16 lg:pt-12 lg:pb-24">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      
+      <!-- Left Column: Copy & Actions -->
+      <div class="lg:col-span-7 space-y-8">
+        <div class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold tracking-wide uppercase">
+          <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+          <span>Open For Adoptions • All Breeds Welcome</span>
+        </div>
+
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.15]">
+          Every rescue pet has a story. <br>
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-paw-600 via-amber-500 to-amber-700">
+            Write their next chapter.
+          </span>
+        </h1>
+
+        <p class="text-lg text-slate-600 leading-relaxed max-w-2xl">
+          PawHaven connects verified rescues and ethical animal shelters with compassionate adopters. Every pet is health-screened, vaccinated, and ready to share endless love.
+        </p>
+
+        <!-- CTA Action Buttons -->
+        <div class="flex flex-wrap gap-4 pt-2">
+          <a href="{{ url_for('pets_catalog') }}" class="inline-flex items-center justify-center px-7 py-3.5 rounded-2xl bg-paw-500 hover:bg-paw-600 text-slate-900 font-bold text-base shadow-lg shadow-paw-500/25 hover:shadow-paw-500/40 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0">
+            <i class="fa-solid fa-heart mr-2 text-rose-700"></i> Meet Available Pets
+          </a>
+          <a href="{{ url_for('dbms_suite') }}" class="inline-flex items-center justify-center px-6 py-3.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 hover:text-slate-900 font-bold text-base shadow-sm transition-all duration-200">
+            <i class="fa-solid fa-database mr-2 text-teal-600"></i> DBMS Academic Suite
+          </a>
+        </div>
+
+        <!-- Metric Stat Cards -->
+        <div class="pt-6 grid grid-cols-3 gap-4 border-t border-slate-100">
+          <div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-slate-900">{{ metrics.available_pets }}</div>
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-0.5">Ready to Adopt</div>
+          </div>
+          <div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-paw-600">{{ metrics.adopted_pets }}</div>
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-0.5">Happy Adoptions</div>
+          </div>
+          <div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-teal-600">{{ metrics.total_pets }}</div>
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-0.5">Total Rescues</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Hero Visual Image -->
+      <div class="lg:col-span-5 relative">
+        <div class="relative mx-auto max-w-md lg:max-w-none">
+          <!-- Decorative Glow Background -->
+          <div class="absolute -inset-2 bg-gradient-to-r from-amber-300 via-paw-200 to-teal-200 rounded-3xl blur-2xl opacity-50 -z-10"></div>
+          
+          <!-- Image Frame -->
+          <div class="overflow-hidden rounded-3xl border-4 border-white shadow-2xl bg-slate-100">
+            <img src="{{ url_for('static', filename='images/hero.jpg') }}" alt="Adorable rescue dog and kitten at PawHaven shelter" class="w-full h-auto object-cover transform hover:scale-105 transition-transform duration-700" loading="eager">
+          </div>
+
+          <!-- Floating Badge -->
+          <div class="absolute -bottom-6 -left-6 bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-slate-100 flex items-center space-x-3.5 hidden sm:flex">
+            <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl font-bold">
+              <i class="fa-solid fa-shield-heart"></i>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-slate-800">100% Vet Checked</div>
+              <div class="text-[11px] text-slate-500">Vaccinated & Microchipped</div>
+            </div>
+          </div>
+
+          <!-- Floating Top Right Badge -->
+          <div class="absolute -top-4 -right-4 bg-white/95 backdrop-blur-md rounded-2xl px-4 py-2.5 shadow-xl border border-slate-100 flex items-center space-x-2 text-xs font-bold text-slate-800 hidden sm:flex">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span>Real-time PostgreSQL</span>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Quick Species Category Filters -->
+<section class="py-12 bg-slate-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between mb-8">
+      <div>
+        <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Browse by Category</h2>
+        <p class="text-sm text-slate-500 mt-1">Select an animal group to view available matches</p>
+      </div>
+      <a href="{{ url_for('pets_catalog') }}" class="text-sm font-bold text-paw-700 hover:text-paw-800 flex items-center">
+        View All <i class="fa-solid fa-arrow-right ml-1.5 text-xs"></i>
+      </a>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+      <a href="{{ url_for('pets_catalog', species='Dog') }}" class="group bg-white rounded-2xl p-5 border border-slate-200/80 hover:border-paw-400 hover:shadow-card transition-all duration-200 text-center">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-amber-50 text-amber-600 text-3xl flex items-center justify-center group-hover:scale-110 transition-transform">
+          🐶
+        </div>
+        <div class="mt-3 font-bold text-slate-800 group-hover:text-paw-700">Dogs & Puppies</div>
+        <div class="text-xs text-slate-400 mt-0.5">Playful companions</div>
+      </a>
+
+      <a href="{{ url_for('pets_catalog', species='Cat') }}" class="group bg-white rounded-2xl p-5 border border-slate-200/80 hover:border-paw-400 hover:shadow-card transition-all duration-200 text-center">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-rose-50 text-rose-600 text-3xl flex items-center justify-center group-hover:scale-110 transition-transform">
+          🐱
+        </div>
+        <div class="mt-3 font-bold text-slate-800 group-hover:text-paw-700">Cats & Kittens</div>
+        <div class="text-xs text-slate-400 mt-0.5">Cuddly & curious</div>
+      </a>
+
+      <a href="{{ url_for('pets_catalog', species='Rabbit') }}" class="group bg-white rounded-2xl p-5 border border-slate-200/80 hover:border-paw-400 hover:shadow-card transition-all duration-200 text-center">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-sky-50 text-sky-600 text-3xl flex items-center justify-center group-hover:scale-110 transition-transform">
+          🐰
+        </div>
+        <div class="mt-3 font-bold text-slate-800 group-hover:text-paw-700">Rabbits</div>
+        <div class="text-xs text-slate-400 mt-0.5">Gentle herbivores</div>
+      </a>
+
+      <a href="{{ url_for('pets_catalog', species='Bird') }}" class="group bg-white rounded-2xl p-5 border border-slate-200/80 hover:border-paw-400 hover:shadow-card transition-all duration-200 text-center">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-emerald-50 text-emerald-600 text-3xl flex items-center justify-center group-hover:scale-110 transition-transform">
+          🦜
+        </div>
+        <div class="mt-3 font-bold text-slate-800 group-hover:text-paw-700">Birds</div>
+        <div class="text-xs text-slate-400 mt-0.5">Cheerful melodies</div>
+      </a>
+
+      <a href="{{ url_for('pets_catalog') }}" class="group bg-white rounded-2xl p-5 border border-slate-200/80 hover:border-paw-400 hover:shadow-card transition-all duration-200 text-center col-span-2 sm:col-span-1">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-purple-50 text-purple-600 text-3xl flex items-center justify-center group-hover:scale-110 transition-transform">
+          🐾
+        </div>
+        <div class="mt-3 font-bold text-slate-800 group-hover:text-paw-700">All Rescues</div>
+        <div class="text-xs text-slate-400 mt-0.5">View entire catalog</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Featured Pets Section -->
+<section class="py-16 bg-white border-y border-slate-200/70">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col md:flex-row md:items-end justify-between mb-12">
+      <div>
+        <div class="text-xs font-bold text-paw-700 uppercase tracking-widest">Available Now</div>
+        <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight mt-1">Featured Rescue Friends</h2>
+      </div>
+      <p class="text-sm text-slate-500 max-w-md mt-2 md:mt-0">
+        These sweet souls are looking for a place to call home. Submit an application today to schedule a meet-and-greet.
+      </p>
+    </div>
+
+    {% if featured_pets %}
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        {% for pet in featured_pets %}
+          <div class="group bg-white rounded-3xl border border-slate-200 shadow-soft hover:shadow-card hover:border-paw-300 transition-all duration-300 flex flex-col overflow-hidden">
+            
+            <!-- Image & Status Overlay -->
+            <div class="relative h-64 overflow-hidden bg-slate-100">
+              <img src="{{ get_pet_image(pet) }}" alt="{{ pet.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+              <div class="absolute top-4 left-4">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-white/95 text-slate-900 shadow-sm backdrop-blur">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
+                  {{ pet.status | upper }}
+                </span>
+              </div>
+              <div class="absolute top-4 right-4">
+                <span class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/90 text-lg shadow-sm backdrop-blur">
+                  {{ pet.species_icon }}
+                </span>
+              </div>
+              <div class="absolute bottom-3 right-3 bg-slate-900/80 text-white text-xs font-bold px-3 py-1 rounded-xl backdrop-blur">
+                ${{ "%.0f"|format(pet.fee) }} Fee
+              </div>
+            </div>
+
+            <!-- Card Body -->
+            <div class="p-6 flex-grow flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between">
+                  <h3 class="text-2xl font-extrabold text-slate-900 group-hover:text-paw-600 transition-colors">{{ pet.name }}</h3>
+                  <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600">{{ pet.size }}</span>
+                </div>
+                
+                <p class="text-xs font-semibold text-paw-700 mt-1 uppercase tracking-wider">
+                  {{ pet.breed }} • {{ pet.age_years }} {{ 'yrs' if pet.age_years >= 1 else 'mo' }} • {{ pet.gender }}
+                </p>
+
+                <p class="text-sm text-slate-600 line-clamp-2 mt-3 leading-relaxed">
+                  {{ pet.description }}
+                </p>
+
+                <!-- Health badges -->
+                <div class="flex flex-wrap gap-1.5 mt-4">
+                  {% if pet.vaccinated %}
+                    <span class="inline-flex items-center text-[11px] font-semibold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md">
+                      <i class="fa-solid fa-syringe mr-1 text-[10px]"></i> Vaccinated
+                    </span>
+                  {% endif %}
+                  {% if pet.spayed_neutered %}
+                    <span class="inline-flex items-center text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md">
+                      <i class="fa-solid fa-check mr-1 text-[10px]"></i> Spayed/Neutered
+                    </span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Action Link -->
+              <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+                <a href="{{ url_for('pet_detail', pet_id=pet.id) }}" class="text-sm font-bold text-slate-700 hover:text-slate-900">
+                  Read Profile
+                </a>
+                <a href="{{ url_for('apply_adoption', pet_id=pet.id) }}" class="inline-flex items-center px-4 py-2 rounded-xl bg-slate-900 hover:bg-paw-600 text-white text-xs font-bold transition-colors">
+                  Adopt {{ pet.name }} <i class="fa-solid fa-arrow-right ml-1.5 text-[10px]"></i>
+                </a>
+              </div>
+
+            </div>
+
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center py-16 bg-slate-50 rounded-3xl border border-dashed border-slate-300">
+        <i class="fa-solid fa-paw text-4xl text-slate-400 mb-3"></i>
+        <h3 class="text-lg font-bold text-slate-800">No pets currently in this status</h3>
+        <p class="text-sm text-slate-500 mt-1">Check back soon or explore our full catalog.</p>
+        <a href="{{ url_for('pets_catalog') }}" class="inline-block mt-4 px-5 py-2.5 rounded-xl bg-paw-500 font-bold text-slate-900 text-sm">
+          Browse All Pets
+        </a>
+      </div>
+    {% endif %}
+
+    <div class="text-center mt-12">
+      <a href="{{ url_for('pets_catalog') }}" class="inline-flex items-center px-8 py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-md transition-all">
+        Browse Complete Pet Catalog ({{ metrics.total_pets }} Total) <i class="fa-solid fa-arrow-right ml-2"></i>
+      </a>
+    </div>
+
+  </div>
+</section>
+
+<!-- Adoption Process Steps -->
+<section class="py-16 bg-slate-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center max-w-2xl mx-auto mb-16">
+      <div class="text-xs font-bold text-paw-700 uppercase tracking-widest">Simple & Transparent</div>
+      <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight mt-1">How Adoption Works</h2>
+      <p class="text-sm text-slate-500 mt-2">
+        Our adoption process is designed to ensure lifelong happiness for both you and your new furry family member.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-soft relative">
+        <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 font-extrabold text-xl flex items-center justify-center mb-5">
+          1
+        </div>
+        <h3 class="font-extrabold text-lg text-slate-900 mb-2">Find Your Match</h3>
+        <p class="text-sm text-slate-500 leading-relaxed">
+          Filter by species, age, and temperament to find animals matching your home lifestyle.
+        </p>
+      </div>
+
+      <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-soft relative">
+        <div class="w-12 h-12 rounded-2xl bg-teal-100 text-teal-700 font-extrabold text-xl flex items-center justify-center mb-5">
+          2
+        </div>
+        <h3 class="font-extrabold text-lg text-slate-900 mb-2">Apply Online</h3>
+        <p class="text-sm text-slate-500 leading-relaxed">
+          Fill in your basic housing details and past pet experience through our instant web form.
+        </p>
+      </div>
+
+      <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-soft relative">
+        <div class="w-12 h-12 rounded-2xl bg-sky-100 text-sky-700 font-extrabold text-xl flex items-center justify-center mb-5">
+          3
+        </div>
+        <h3 class="font-extrabold text-lg text-slate-900 mb-2">Shelter Review</h3>
+        <p class="text-sm text-slate-500 leading-relaxed">
+          Our shelter team reviews your application, checks vet history, and schedules a meet & greet.
+        </p>
+      </div>
+
+      <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-soft relative">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 font-extrabold text-xl flex items-center justify-center mb-5">
+          4
+        </div>
+        <h3 class="font-extrabold text-lg text-slate-900 mb-2">Welcome Home</h3>
+        <p class="text-sm text-slate-500 leading-relaxed">
+          Finalize adoption agreements and bring your new loyal best friend home forever!
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DBMS Academic Spotlight Banner -->
+<section class="py-14 bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
+      <div class="space-y-3 max-w-2xl">
+        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-teal-900/80 border border-teal-500/40 text-teal-300 text-xs font-bold uppercase tracking-wider">
+          <i class="fa-solid fa-graduation-cap"></i>
+          <span>Academic Database Architecture</span>
+        </div>
+        <h3 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+          Explore PawHaven's 3NF Relational Database Suite
+        </h3>
+        <p class="text-slate-300 text-sm leading-relaxed">
+          Built with PostgreSQL 18. Inspect Boyce-Codd & 3NF dependencies, execute live analytical queries with <code class="text-teal-400 bg-slate-800 px-1.5 py-0.5 rounded">EXPLAIN ANALYZE</code>, test ACID rollback scenarios, and view live database statistics.
+        </p>
+      </div>
+      <div class="flex-shrink-0">
+        <a href="{{ url_for('dbms_suite') }}" class="inline-flex items-center px-6 py-3.5 rounded-2xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-sm shadow-lg shadow-teal-500/20 transition-all duration-200">
+          <i class="fa-solid fa-terminal mr-2"></i> Launch DBMS Suite
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
