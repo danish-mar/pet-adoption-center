@@ -13,3 +13,10 @@ wheels/
 .env
 .pgdata/
 *.log
+
+# Office temporary & lock files
+.~lock.*
+~$*
+*_backup.docx
+*.tmp
+.DS_Store
